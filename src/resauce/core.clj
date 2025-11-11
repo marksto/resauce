@@ -53,22 +53,26 @@
   false)
 
 (defmulti url-dir
-  "Return a list of URLs contained by this URL, if the protocol supports it."
-  {:arglists '([url])}
+  "Returns a list of URLs contained by a given 'resource-namish' thing `n` (URL,
+   URI, File, String)."
+  {:arglists '([n])}
   url-scheme)
 
-(defmethod url-dir "file" [url]
-  (map io/as-url (.listFiles (url-file url))))
+(defmethod url-dir "file" [n]
+  (map #(io/as-url (.toFile %)) (fs/list-dir n)))
 
-(defmethod url-dir "jar" [url]
-  (let [conn (.openConnection (io/as-url url))
-        jar  (.getJarFile ^JarURLConnection conn)
-        path (.getEntryName ^JarURLConnection conn)]
-    (->> (.entries jar)
-         (enumeration-seq)
-         (map (memfn ^JarEntry getName))
-         (filter-dir-paths path)
-         (map (partial build-url url path)))))
+(defmethod url-dir "jar" [n]
+  (let [url-conn ^JarURLConnection (.openConnection (io/as-url n))
+        jar-file ^JarFile (.getJarFile url-conn)
+        entry-name (.getEntryName url-conn)]
+    (when (and jar-file entry-name)
+      (->> (.entries jar-file)
+           (enumeration-seq)
+           (map (memfn ^JarEntry getName))
+           (filter-dir-paths entry-name)
+           (map #(build-url n entry-name %))))))
+
+(defmethod url-dir :default [_])
 
 (defn- default-loader []
   (.getContextClassLoader (Thread/currentThread)))
