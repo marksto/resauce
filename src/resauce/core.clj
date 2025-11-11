@@ -24,6 +24,12 @@
   ;; Using URI instead of URL to support arguments without schema.
   (when n (.getScheme ^URI (as-uri n))))
 
+(defn inside-jar?
+  "Returns true if a given 'resource-namish' thing `n` (URL, URI, File, String)
+   is inside a JAR file."
+  [n]
+  (= "jar" (url-scheme n)))
+
 (defmulti directory?
   "Returns true if a given 'resource-namish' thing `n` (URL, URI, File, String)
    points to an existing directory (in the file system or inside a JAR file).
