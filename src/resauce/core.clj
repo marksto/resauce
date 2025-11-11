@@ -1,30 +1,28 @@
 (ns resauce.core
   (:require [babashka.fs :as fs]
             [clojure.java.io :as io]
+            [clojure.string :as str]
             [resauce.protocols :refer [as-uri]])
-  (:import [java.io File]
-           [java.net JarURLConnection URI URL]
+  (:import [java.net JarURLConnection URI]
            [java.util.jar JarEntry JarFile]
            [java.util.regex Pattern]))
 
-(defn- add-ending-slash [^String s]
-  (if (.endsWith s "/") s (str s "/")))
+(defn- add-ending-slash [s]
+  (if (str/ends-with? s "/") s (str s "/")))
 
 (defn- filter-dir-paths [dir paths]
   (let [re (re-pattern (str (Pattern/quote (add-ending-slash dir)) "[^/]+/?"))]
-    (filter (partial re-matches re) paths)))
+    (filter #(re-matches re %) paths)))
 
 (defn- build-url [base-url dir path]
-  {:pre [(.startsWith ^String path dir)]}
-  (URL. (str (add-ending-slash (str base-url))
-             (subs path (count (add-ending-slash dir))))))
+  {:pre [(str/starts-with? path dir)]}
+  (io/as-url
+    (str (add-ending-slash (str base-url))
+         (subs path (count (add-ending-slash dir))))))
 
 (defn- url-scheme ^String [n]
   ;; Using URI instead of URL to support arguments without schema.
   (when n (.getScheme ^URI (as-uri n))))
-
-(defn- ^File url-file [url]
-  (File. ^String (.getPath (io/as-url url))))
 
 (defmulti directory?
   "Returns true if a given 'resource-namish' thing `n` (URL, URI, File, String)
