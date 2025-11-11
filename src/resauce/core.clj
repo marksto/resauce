@@ -78,13 +78,15 @@
   (.getContextClassLoader (Thread/currentThread)))
 
 (defn resources
-  "Returns *all* the URLs for a named resource. Uses the context class loader
-  if no loader is specified."
-  ([n] (resources n (default-loader)))
-  ([n ^ClassLoader loader] (enumeration-seq (.getResources loader n))))
+  "Returns *all* the URLs for a resource with the given `name` on the classpath.
+   Uses the context class loader if no loader is specified."
+  ([^String name] (resources name (default-loader)))
+  ([^String name ^ClassLoader loader]
+   (enumeration-seq (.getResources loader name))))
 
 (defn resource-dir
-  "Return a list of resource URLs on the classpath that have the supplied
-  path prefix."
-  ([path] (resource-dir path (default-loader)))
-  ([path loader] (mapcat url-dir (resources path loader))))
+  "Returns a list of resource URLs on the classpath that have the `path` prefix.
+   Uses the context class loader if no `loader` is specified."
+  ([^String path] (resource-dir path (default-loader)))
+  ([^String path ^ClassLoader loader]
+   (mapcat url-dir (resources path loader))))
