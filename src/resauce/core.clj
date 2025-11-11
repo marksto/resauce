@@ -1,8 +1,10 @@
 (ns resauce.core
-  (:require [clojure.java.io :as io])
+  (:require [babashka.fs :as fs]
+            [clojure.java.io :as io]
+            [resauce.protocols :refer [as-uri]])
   (:import [java.io File]
            [java.net JarURLConnection URI URL]
-           [java.util.jar JarEntry]
+           [java.util.jar JarEntry JarFile]
            [java.util.regex Pattern]))
 
 (defn- add-ending-slash [^String s]
@@ -17,30 +19,37 @@
   (URL. (str (add-ending-slash (str base-url))
              (subs path (count (add-ending-slash dir))))))
 
-(defn- url-scheme [url]
+(defn- url-scheme ^String [n]
   ;; Using URI instead of URL to support arguments without schema.
-  (.getScheme (URI. (str url))))
+  (when n (.getScheme ^URI (as-uri n))))
 
 (defn- ^File url-file [url]
   (File. ^String (.getPath (io/as-url url))))
 
 (defmulti directory?
-  "Return true if a URL points to a directory resource."
-  {:arglists '([url])}
+  "Returns true if a given 'resource-namish' thing `n` (URL, URI, File, String)
+   points to an existing directory (in the file system or inside a JAR file).
+
+   NB: Keep in mind that this function will return `false` for regular files."
+  {:arglists '([n])}
   url-scheme)
 
-(defmethod directory? "file" [url]
-  (let [file (url-file url)]
-    (and (.exists file) (.isDirectory file))))
+(defmethod directory? "file" [n]
+  (let [path (fs/path (as-uri n))]
+    (and (fs/exists? path)
+         (fs/directory? path))))
 
-(defmethod directory? "jar" [url]
-  (let [conn  (.openConnection (io/as-url url))
-        jar   (.getJarFile ^JarURLConnection conn)
-        path  (.getEntryName ^JarURLConnection conn)
-        entry (.getEntry jar (add-ending-slash path))]
-    (and entry (.isDirectory entry))))
+(defmethod directory? "jar" [n]
+  (let [url-conn ^JarURLConnection (.openConnection (io/as-url n))
+        jar-file ^JarFile (.getJarFile url-conn)
+        entry-name (.getEntryName url-conn)]
+    (boolean
+      (when (and jar-file entry-name)
+        (some-> jar-file
+                (.getEntry (add-ending-slash entry-name))
+                (.isDirectory))))))
 
-(defmethod directory? :default [url]
+(defmethod directory? :default [_]
   false)
 
 (defmulti url-dir
