@@ -1,0 +1,130 @@
+
+Assertion failed:
+regular directories
+
+Expected:
+(every?
+  true?
+  (map
+    directory?
+    (correct-fs-dirs)))
+Actual:
+(not
+  (every?
+    true?
+    (false
+      false
+      true
+      true
+      false
+      true
+      false
+      true
+      false
+      false
+      true
+      true
+      false
+      true
+      false
+      true)))
+
+
+This happens for `correct-fs-dirs`.
+This is kinda major. Perfectly valid inputs sometimes get misclassified by the mm
+`url-scheme` dispatcher fn due to an incorrect/incomplete implementation.
+
+```
+(correct-fs-dirs)
+=>
+(#object [java.io.File 0x5163fef3 "/Users/me"] ; <~ false
+ #object [sun.nio.fs.UnixPath 0x1f2bf9ef "/Users/me"] ; <~ false
+ #object [java.net.URL 0x66c9be6a "file:/Users/me/"]
+ #object [java.net.URI 0x6beb06f2 "file:///Users/me/"]
+ "/Users/me" ; <~ false
+ "file:/Users/me"
+ "/Users/me/" ; <~ false
+ "file:/Users/me/"
+ #object [java.io.File 0x5b8a6621 "/Users/me/Desktop/Projects/OSS/resauce/test/resauce"] ; <~ false
+ #object [sun.nio.fs.UnixPath 0x95233fe "/Users/me/Desktop/Projects/OSS/resauce/test/resauce"] ; <~ false
+ #object [java.net.URL 0x5574e811 "file:/Users/me/Desktop/Projects/OSS/resauce/test/resauce/"]
+ #object [java.net.URI 0x4c41e8e3 "file:///Users/me/Desktop/Projects/OSS/resauce/test/resauce/"]
+ "/Users/me/Desktop/Projects/OSS/resauce/test/resauce" ; <~ false
+ "file:/Users/me/Desktop/Projects/OSS/resauce/test/resauce"
+ "/Users/me/Desktop/Projects/OSS/resauce/test/resauce/" ; <~ false
+ "file:/Users/me/Desktop/Projects/OSS/resauce/test/resauce/")
+```
+
+---
+
+Assertion failed with error:
+regular directories
+
+java.lang.IllegalArgumentException: No implementation of method: :as-url of protocol: #'clojure.java.io/Coercions found for class: sun.nio.fs.UnixPath
+at clojure.core$_cache_protocol_fn.invokeStatic (core_deftype.clj:583)
+clojure.java.io$fn__10827$G__10822__10832.invoke (io.clj:35)
+resauce.core$url_file.invokeStatic (core.clj:25)
+resauce.core$url_file.invoke (core.clj:24)
+resauce.core$eval607$fn__608.invoke (core.clj:33)
+...
+resauce.core_test$fn__669$fn__678.invoke (core_test.clj:165)
+resauce.core_test$fn__669.invokeStatic (core_test.clj:163)
+resauce.core_test/fn (core_test.clj:158)
+
+
+This happens for `incorrect-fs-dirs`.
+While one can argue about whether it should return a `false` result or throw here,
+there is no doubt that it would be great to have full support for Java NIO `Path`.
+
+Arguments for returning `false` rather than throwing:
+- current impl does not throw for obviously wrong inputs, e.g. `(directory? nil)`
+- a non-throwing version has a better DX, e.g. it can be used in threading as is
+
+---
+
+Assertion failed:
+resources inside a JAR file
+
+Expected:
+(every?
+  false?
+  (map
+    directory?
+    (files-in-jars)))
+Actual:
+(not
+  (every?
+    false?
+    (nil
+      nil
+      nil
+      nil
+      nil
+      nil)))
+
+
+This happens for `files-in-jars`.
+This is kinda picky, but it would be nice to return `false` for files in JARs,
+just like for any regular FS files.
+
+---
+
+Assertion failed with error:
+resources inside a JAR file
+
+java.lang.NullPointerException: Cannot invoke "String.endsWith(String)" because "s" is null
+at resauce.core$add_ending_slash.invokeStatic (core.clj:9)
+resauce.core$add_ending_slash.invoke (core.clj:8)
+resauce.core$eval612$fn__613.invoke (core.clj:40)
+...
+resauce.core_test$fn__669.invokeStatic (core_test.clj:171)
+resauce.core_test/fn (core_test.clj:158)
+
+
+This happens for `incorrect-jar-dirs`.
+While one can argue about whether it should return a `false` result or throw here,
+there is no doubt that it should not end up with an NPE.
+
+Arguments for returning `false` rather than throwing:
+- current impl does not throw for obviously wrong inputs, e.g. `(directory? nil)`
+- a non-throwing version has a better DX, e.g. it can be used in threading as is
