@@ -197,11 +197,20 @@
 ;;; TESTS
 
 (deftest test-directory?
-  (is (directory? (io/resource "resauce")))
-  (is (directory? (io/resource "clojure")))
-  (is (not (directory? (io/resource "resauce/core.clj"))))
-  (is (not (directory? (io/resource "clojure/core.clj"))))
-  (is (not (directory? nil))))
+  (testing "corner cases"
+    (is (not (directory? nil))))
+  (testing "regular files + JAR file itself"
+    (is (every? false? (map directory? (fs-files)))))
+  (testing "regular directories"
+    (is (every? true?  (map directory? (correct-fs-dirs))))
+    (is (every? false? (map directory? (incorrect-fs-dirs)))))
+  (testing "JAR file itself"
+    (is (every? false? (map directory? (jar-files false))))
+    (is (every? false? (map directory? (jar-files true)))))
+  (testing "resources inside a JAR file"
+    (is (every? false? (map directory? (files-in-jars))))
+    (is (every? true?  (map directory? (correct-jar-dirs))))
+    (is (every? false? (map directory? (incorrect-jar-dirs))))))
 
 (deftest test-resources
   (let [rs (sort (map str (resources "resauce")))]
