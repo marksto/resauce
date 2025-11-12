@@ -4,8 +4,11 @@
             [clojure.string :as str]
             [resauce.protocols :refer [as-uri]])
   (:import [java.net JarURLConnection URI]
+           [java.nio.file Path]
            [java.util.jar JarEntry JarFile]
            [java.util.regex Pattern]))
+
+(set! *warn-on-reflection* true)
 
 (defn- add-ending-slash [s]
   (if (str/ends-with? s "/") s (str s "/")))
@@ -63,7 +66,7 @@
   url-scheme)
 
 (defmethod url-dir "file" [n]
-  (map #(io/as-url (.toFile %)) (fs/list-dir n)))
+  (map #(io/as-url (.toFile ^Path %)) (fs/list-dir n)))
 
 (defmethod url-dir "jar" [n]
   (let [url-conn ^JarURLConnection (.openConnection (io/as-url n))
