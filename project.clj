@@ -3,7 +3,8 @@
   :url "https://github.com/weavejester/resauce"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :dependencies [[org.clojure/clojure "1.5.1"]]
+  :dependencies [[org.clojure/clojure "1.9.0"]]
   :plugins [[lein-codox "0.10.7"]]
   :codox {:output-path "codox"}
-  :profiles {:test {:dependencies [[medley "0.6.0"]]}})
+  :profiles {:test {:dependencies [[babashka/fs "0.5.27"]
+                                   [medley "0.6.0"]]}})
