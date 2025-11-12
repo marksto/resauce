@@ -2,7 +2,7 @@
   (:require [clojure.test :refer :all]
             [clojure.java.io :as io]
             [resauce.core :refer :all]
-            [resauce.test-utils :as tu]))
+            [resauce.test.utils :as tu]))
 
 (deftest test-inside-jar?
   (testing "corner cases"
@@ -62,4 +62,4 @@
     (is (re-find #"src/resauce/protocols\.clj$" (second rs)))
     (is (re-find #"test/resauce/core_test\.clj$" (nth rs 2)))
     (is (re-find #"test/resauce/protocols_test\.clj$" (nth rs 3)))
-    (is (re-find #"test/resauce/test_utils\.clj$" (nth rs 4)))))
+    (is (re-find #"test/resauce/test/$" (nth rs 4)))))
