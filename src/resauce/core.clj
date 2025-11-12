@@ -28,14 +28,15 @@
   (when n (.getScheme ^URI (as-uri n))))
 
 (defn inside-jar?
-  "Returns true if a given 'resource-namish' thing `n` (URL, URI, File, String)
-   is inside a JAR file."
+  "Returns true if the given 'resource-namish' thing `n` (URL, URI, File, Path,
+   String) is inside a JAR file."
   [n]
   (= "jar" (url-scheme n)))
 
 (defmulti directory?
-  "Returns true if a given 'resource-namish' thing `n` (URL, URI, File, String)
-   points to an existing directory (in the file system or inside a JAR file).
+  "Returns true if the given 'resource-namish' thing `n` (URL, URI, File, Path,
+   String) points to an existing directory (in the file system or inside a JAR
+   file).
 
    NB: Keep in mind that this function will return `false` for regular files."
   {:arglists '([n])}
@@ -60,8 +61,8 @@
   false)
 
 (defmulti url-dir
-  "Returns a list of URLs contained by a given 'resource-namish' thing `n` (URL,
-   URI, File, String)."
+  "Returns a list of URLs contained by the given 'resource-namish' thing `n`
+   (URL, URI, File, Path, String)."
   {:arglists '([n])}
   url-scheme)
 
